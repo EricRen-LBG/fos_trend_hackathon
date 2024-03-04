@@ -13,5 +13,7 @@
  * https://arxiv.org/pdf/2402.17944v2.pdf
  * https://blog.gopenai.com/enhancing-tabular-data-analysis-with-llms-78af1b7a6df9?source=social.linkedin&_nonce=HbvHqvMU
 
+ * https://generative-ai-newsroom.com/can-llms-help-us-understand-data-49891c4e1771
+
 
  
