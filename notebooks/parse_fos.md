@@ -7,12 +7,12 @@ jupyter:
       format_version: '1.3'
       jupytext_version: 1.16.1
   kernelspec:
-    display_name: Python 3 (Local)
+    display_name: Python (Local)
     language: python
-    name: python3
+    name: base
 ---
 
-# GCP Play with LLMs
+# Processing the FOS documents to generate a summary table for trend analysis
 
 Ref: https://console.cloud.google.com/vertex-ai/publishers/google/model-garden/text-bison
 
@@ -46,13 +46,13 @@ PROJECT_ID = "[your-project-id]"
 PROJECT_ID = ! gcloud config get core/project
 PROJECT_ID = PROJECT_ID[0]
 
-REGION = "europe-west2"
+REGION = "europe-west1"
 
 PROJECT_ID, REGION
 ```
 
 <!-- #region toc-hr-collapsed=true -->
-## Text Generation
+## For testing the LLM APIs
 <!-- #endregion -->
 
 ### Call from terminal using
@@ -102,18 +102,6 @@ print(
 )
 ```
 
-### Zero shot prompt
-
-```python
-prompt = """Decide whether a Tweet's sentiment is positive, neutral, or negative.
-
-Tweet: I loved the new YouTube video you made!
-Sentiment:
-"""
-
-print(model.predict(prompt=prompt, max_output_tokens=256).text)
-```
-
 ```python
 
 ```
@@ -122,9 +110,7 @@ print(model.predict(prompt=prompt, max_output_tokens=256).text)
 
 ```python
 compnay_info_file = "../fos_complaints_company_2013.csv"
-UK_banks = [
-    "Barclays Bank UK PLC"
-]
+
 ```
 
 ```python
@@ -139,6 +125,12 @@ company_df.head()
 
 company_df = company_df[company_df["company"].str.contains("Lloyds Bank PLC", case=False)]#.sample(5) # 810 rows
 company_df.head()
+```
+
+```python
+company_df = company_df.iloc[0:5]
+
+company_df.shape
 ```
 
 ## Read the complaint file information
@@ -194,14 +186,11 @@ def list_blobs_with_prefix(bucket_name, prefix, delimiter=None):
 
     return blobs
 #    return [blob.name for blob in blobs]
-
-
-
 ```
 
 ```python
-#[b.name for b in list_blobs("fos-trend-bucket")]
-[b.name for b in list_blobs_with_prefix(bucket_name="fos-trend-bucket", prefix="text_extracts")]
+#[b.name for b in list_blobs("fos-trend-bukcet")][0:10]
+[b.name for b in list_blobs_with_prefix(bucket_name="fos-trend-bukcet", prefix="text_extracts")][0:10]
 ```
 
 ```python
@@ -209,8 +198,8 @@ def list_blobs_with_prefix(bucket_name, prefix, delimiter=None):
 
 blob_df = pd.DataFrame(
     {
-        "blob": [b for b in list_blobs_with_prefix(bucket_name="fos-trend-bucket", prefix="text_extracts")],
-        "drn": [b.name[14:25] for b in list_blobs_with_prefix(bucket_name="fos-trend-bucket", prefix="text_extracts")],
+        "blob": [b for b in list_blobs_with_prefix(bucket_name="fos-trend-bukcet", prefix="text_extracts")],
+        "drn": [b.name[14:25] for b in list_blobs_with_prefix(bucket_name="fos-trend-bukcet", prefix="text_extracts")],
     }
 )
 
@@ -221,6 +210,10 @@ blob_df.head()
 selected_df = blob_df.merge(company_df, how="inner", on='drn')
 
 selected_df.head()
+```
+
+```python
+selected_df.shape
 ```
 
 ## Read the complaint text
@@ -239,10 +232,6 @@ def read_txt(blob):
 ```
 
 ```python
-
-```
-
-```python
 for index, row in selected_df.iterrows():
     print(row['drn'], row['company'])
     print(read_txt(row["blob"])[0:20])
@@ -251,8 +240,8 @@ for index, row in selected_df.iterrows():
 ```python
 import vertexai
 from vertexai.language_models import TextGenerationModel
-vertexai.init(project="playpen-714696", location="europe-west4")
-
+#vertexai.init(project="lloyds-genai24lon-270", location="europe-west1")
+vertexai.init()
 
 def processing_doc(doc_content) -> None:
     """Get one row for the document"""
