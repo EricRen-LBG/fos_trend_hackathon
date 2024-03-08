@@ -124,11 +124,13 @@ company_df.head()
 #df[df["company"].str.contains("Barclays|Lloyds|HSBC|Santander|Westminster|Nationwide|Admiral|Aviva", case=False)] # 5694 rows
 
 company_df = company_df[company_df["company"].str.contains("Lloyds Bank PLC", case=False)]#.sample(5) # 810 rows
+#company_df = company_df[company_df["company"].str.contains("Barclays", case=False)]#.sample(5) # 810 rows
+
 company_df.head()
 ```
 
 ```python
-company_df = company_df.iloc[0:5]
+#company_df = company_df.iloc[0:5]
 
 company_df.shape
 ```
@@ -209,11 +211,9 @@ blob_df.head()
 ```python
 selected_df = blob_df.merge(company_df, how="inner", on='drn')
 
-selected_df.head()
-```
+print(selected_df.shape)
 
-```python
-selected_df.shape
+selected_df.head()
 ```
 
 ## Read the complaint text
@@ -234,14 +234,11 @@ def read_txt(blob):
 ```python
 for index, row in selected_df.iterrows():
     print(row['drn'], row['company'])
-    print(read_txt(row["blob"])[0:20])
+    print(read_txt(row["blob"])[0:10])
 ```
 
 ```python
-import vertexai
-from vertexai.language_models import TextGenerationModel
 #vertexai.init(project="lloyds-genai24lon-270", location="europe-west1")
-vertexai.init()
 
 def processing_doc(doc_content) -> None:
     """Get one row for the document"""
@@ -253,8 +250,8 @@ def processing_doc(doc_content) -> None:
         "top_p": 1
     }
 
-#    model = TextGenerationModel.from_pretrained("text-bison@001")
-    model = TextGenerationModel.from_pretrained("text-bison")
+#    model = TextGenerationModel.from_pretrained("text-bison")
+    model = TextGenerationModel.from_pretrained("text-bison-32k")
     
     prompt = f"""You are a text processing agent working with Financial Ombudsman Service (FOS) decision document.
 Extract specified values from the source text. 
@@ -296,71 +293,63 @@ Do not infer any data based on previous training, strictly use only source text 
 
 ```
 
-```python
-import json
-
-doc_content = read_txt(selected_df["blob"].iloc[0])
-
-response_string = processing_doc({doc_content[0:1000]})
-
-cleaned_json_string = response_string.replace('```','').split("json",1)[1]
-
-d = json.loads(cleaned_json_string)
-print(d)
-
-df = pd.json_normalize(d)
-df
-```
+## Process all
 
 ```python
-
-
-
+#test one file:
 # doc_content = read_txt(selected_df["blob"].iloc[0])
 
-# response_string = processing_doc({doc_content[0:1000]})
+# response_string = processing_doc({doc_content})
+# print(response_string)
 
-# cleaned_json_string = response_string.replace('```','').split("json",1)[1]
+# cleaned_json_string = response_string.replace('```','').replace('"""','')#.split("json",1)[1]
 
 # d = json.loads(cleaned_json_string)
 # print(d)
 
 # df = pd.json_normalize(d)
 # df
+```
 
-
-#[read_text(r["blob"]) for row in selected_df.iterrows()]
+```python
+import time
 
 df_list = []
-for index, (blob, drn, company) in selected_df.iterrows():
-    doc_content = read_txt(blob)
-    response_string = processing_doc({doc_content[0:1000]})
-    cleaned_json_string = response_string.replace('```','').split("json",1)[1]
-    d = json.loads(cleaned_json_string)
-    df = pd.json_normalize(d)
-    df_list.append(df)
+for count, (index, (blob, drn, company)) in enumerate(selected_df.iterrows()):
+    print(f"{count}: {drn}")
+    try:
+        doc_content = read_txt(blob)
+        response_string = processing_doc({doc_content})
+    #    cleaned_json_string = response_string.replace('```','').split("json",1)[1]
+        cleaned_json_string = response_string.replace('```','').replace('"""','')
 
-df_list
-    
-```
+        d = json.loads(cleaned_json_string)
+        df = pd.json_normalize(d)
+        df_list.append(df)
+        print("----------")
+        time.sleep(5)
+    except:
+        continue
 
-```python
+#df_list[0:2]
+
 summary_table = pd.concat(df_list, axis=0)
+
+
+
 ```
 
 ```python
+print(summary_table.shape)
+summary_table.head()
+
 summary_table_name = "../output/summary_lloyds.csv"
 
 summary_table.to_csv(summary_table_name, index=False)
-
 ```
 
 ```python
-
-```
-
-```python
-
+pd.read_csv(summary_table_name).head()
 ```
 
 ```python
