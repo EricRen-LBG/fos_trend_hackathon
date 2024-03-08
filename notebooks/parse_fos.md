@@ -333,7 +333,7 @@ for count, (index, (blob, drn, company)) in enumerate(selected_df.iterrows()):
         df_list.append(df)
         print("----------")
         # time.sleep(5)
-    except e:
+    except:
         continue
 
 #df_list[0:2]
@@ -353,7 +353,7 @@ summary_table.to_csv(summary_table_name, index=False)
 ```
 
 ```python
-
+selected_df.shape
 ```
 
 ```python
