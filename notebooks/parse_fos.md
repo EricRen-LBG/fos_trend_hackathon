@@ -123,8 +123,8 @@ company_df.head()
 
 #df[df["company"].str.contains("Barclays|Lloyds|HSBC|Santander|Westminster|Nationwide|Admiral|Aviva", case=False)] # 5694 rows
 
-company_df = company_df[company_df["company"].str.contains("Lloyds Bank PLC", case=False)]#.sample(5) # 810 rows
-#company_df = company_df[company_df["company"].str.contains("Barclays", case=False)]#.sample(5) # 810 rows
+#company_df = company_df[company_df["company"].str.contains("Lloyds Bank PLC", case=False)]#.sample(5) # 810 rows
+company_df = company_df[company_df["company"].str.contains("Barclays", case=False)]#.sample(5) # 810 rows
 
 company_df.head()
 ```
@@ -232,7 +232,7 @@ def read_txt(blob):
 ```
 
 ```python
-for index, row in selected_df.iterrows():
+for index, row in selected_df.iloc[0:5].iterrows():
     print(row['drn'], row['company'])
     print(read_txt(row["blob"])[0:10])
 ```
@@ -327,15 +327,13 @@ for count, (index, (blob, drn, company)) in enumerate(selected_df.iterrows()):
         df = pd.json_normalize(d)
         df_list.append(df)
         print("----------")
-        time.sleep(5)
+        # time.sleep(5)
     except:
         continue
 
 #df_list[0:2]
 
 summary_table = pd.concat(df_list, axis=0)
-
-
 
 ```
 
@@ -349,11 +347,25 @@ summary_table.to_csv(summary_table_name, index=False)
 ```
 
 ```python
-pd.read_csv(summary_table_name).head()
+
 ```
 
 ```python
 
+```
+
+```python
+
+```
+
+```python
+df = pd.read_csv(summary_table_name).head()
+
+df.shape
+```
+
+```python
+df.head()
 ```
 
 ```python
