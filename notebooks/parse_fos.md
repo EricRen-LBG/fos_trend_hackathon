@@ -21,6 +21,8 @@ Ref: https://console.cloud.google.com/vertex-ai/publishers/google/model-garden/t
 import numpy as np
 import pandas as pd
 import json
+import json5
+
 import time
 
 #from google.colab import auth as google_auth
@@ -124,14 +126,12 @@ company_df.head()
 #df[df["company"].str.contains("Barclays|Lloyds|HSBC|Santander|Westminster|Nationwide|Admiral|Aviva", case=False)] # 5694 rows
 
 #company_df = company_df[company_df["company"].str.contains("Lloyds Bank PLC", case=False)]#.sample(5) # 810 rows
-company_df = company_df[company_df["company"].str.contains("Barclays", case=False)]#.sample(5) # 810 rows
+company_df = company_df[company_df["company"].str.contains("Barclays", case=False)].sample(100) # 810 rows
 
 company_df.head()
 ```
 
 ```python
-#company_df = company_df.iloc[0:5]
-
 company_df.shape
 ```
 
@@ -255,7 +255,7 @@ def processing_doc(doc_content) -> None:
     
     prompt = f"""You are a text processing agent working with Financial Ombudsman Service (FOS) decision document.
 Extract specified values from the source text. 
-Return answer as JOSN object with following fields:
+Return answer as JSON object with following fields:
  - \"Case number\" <number>
  - \"Complainant\" <string>
  - \"Defendant\" <string>
@@ -282,7 +282,7 @@ Do not infer any data based on previous training, strictly use only source text 
 ========
 \"\"\"
 """
-
+    
     response = model.predict(
         prompt,
         **parameters
@@ -297,18 +297,22 @@ Do not infer any data based on previous training, strictly use only source text 
 
 ```python
 #test one file:
-# doc_content = read_txt(selected_df["blob"].iloc[0])
+doc_content = read_txt(selected_df["blob"].iloc[1])
 
-# response_string = processing_doc({doc_content})
-# print(response_string)
+response_string = processing_doc({doc_content})
+print(response_string)
 
-# cleaned_json_string = response_string.replace('```','').replace('"""','')#.split("json",1)[1]
+cleaned_json_string = response_string.replace('```','').replace('"""','').split("json",1)[1]
 
-# d = json.loads(cleaned_json_string)
-# print(d)
+d = json5.loads(cleaned_json_string)
+print(d)
 
-# df = pd.json_normalize(d)
-# df
+df = pd.json_normalize(d)
+df
+```
+
+```python
+
 ```
 
 ```python
@@ -320,15 +324,16 @@ for count, (index, (blob, drn, company)) in enumerate(selected_df.iterrows()):
     try:
         doc_content = read_txt(blob)
         response_string = processing_doc({doc_content})
-    #    cleaned_json_string = response_string.replace('```','').split("json",1)[1]
-        cleaned_json_string = response_string.replace('```','').replace('"""','')
+        # cleaned_json_string = response_string.replace('```','').split("json",1)[1]
+        # cleaned_json_string = response_string.replace('```','').replace('"""','')
+        cleaned_json_string = response_string.replace('```','').replace('"""','').split("json",1)[1]
 
-        d = json.loads(cleaned_json_string)
+        d = json5.loads(cleaned_json_string)
         df = pd.json_normalize(d)
         df_list.append(df)
         print("----------")
         # time.sleep(5)
-    except:
+    except e:
         continue
 
 #df_list[0:2]
@@ -341,7 +346,8 @@ summary_table = pd.concat(df_list, axis=0)
 print(summary_table.shape)
 summary_table.head()
 
-summary_table_name = "../output/summary_lloyds.csv"
+#summary_table_name = "../output/summary_lloyds.csv"
+summary_table_name = "../output/summary_barclays.csv"
 
 summary_table.to_csv(summary_table_name, index=False)
 ```
