@@ -7,9 +7,9 @@ jupyter:
       format_version: '1.3'
       jupytext_version: 1.16.1
   kernelspec:
-    display_name: Python (Local)
+    display_name: Python 3 (Local)
     language: python
-    name: base
+    name: python3
 ---
 
 # Processing the FOS documents to generate a summary table for trend analysis
@@ -24,9 +24,6 @@ import json
 import json5
 
 import time
-
-#from google.colab import auth as google_auth
-#google_auth.authenticate_user()
 
 import vertexai
 #from vertexai.preview.language_models import TextGenerationModel, TextEmbeddingModel
@@ -55,9 +52,9 @@ PROJECT_ID, REGION
 
 <!-- #region toc-hr-collapsed=true -->
 ## For testing the LLM APIs
-<!-- #endregion -->
 
-### Call from terminal using
+**have a laugh first :-)**
+<!-- #endregion -->
 
 ```python
 %env PROJECT_ID=$PROJECT_ID
@@ -66,36 +63,8 @@ PROJECT_ID, REGION
 ### Vertex AI SDK for Python
 
 ```python
-
-def interview(temperature: float = .2) -> None:
-    """Ideation example with a Large Language Model"""
-
-    # TODO developer - override these parameters as needed:
-    parameters = {
-        "temperature": temperature,
-        "max_output_tokens": 256,   
-        "top_p": .8,                
-        "top_k": 40,                 
-    }
-
-    model = TextGenerationModel.from_pretrained("text-bison@001")
-    response = model.predict(
-        'Give me ten interview questions for the role of program manager.',
-        **parameters,
-    )
-    print(f"Response from Model: \n{response.text}")
-    
-```
-
-```python
-interview()
-```
-
-```python
 model = TextGenerationModel.from_pretrained("text-bison@001")
-```
 
-```python
 prompt = "Who was the first elephant to visit the moon?"
 #prompt = "Who was the first elephant to visit the moon? I think it was called Lara"
 
@@ -112,7 +81,6 @@ print(
 
 ```python
 compnay_info_file = "../fos_complaints_company_2013.csv"
-
 ```
 
 ```python
@@ -121,18 +89,16 @@ company_df.head()
 ```
 
 ```python
-#df[df["company"].str.contains("Bank|Insurance|Barclays|Lloyds|HSBC|Santander|Westminster|Nationwide|Admiral|Aviva", case=False)] # 14633 rows
+#df[df["company"].str.contains("Bank|Insurance|Barclays|Lloyds|HSBC|Santander|Westminster|Nationwide|Admiral|Aviva", case=False)] # ~15K rows
+#df[df["company"].str.contains("Barclays|Lloyds|HSBC|Santander|Westminster|Nationwide|Admiral|Aviva", case=False)] # ~10K rows
 
-#df[df["company"].str.contains("Barclays|Lloyds|HSBC|Santander|Westminster|Nationwide|Admiral|Aviva", case=False)] # 5694 rows
+company_df = company_df[company_df["company"].str.contains("Barclays|Lloyds|HSBC|Santander|Westminster|Nationwide|Admiral|Aviva|Insurance", case=False)].sample(1000) # ~10K rows
 
-#company_df = company_df[company_df["company"].str.contains("Lloyds Bank PLC", case=False)]#.sample(5) # 810 rows
-company_df = company_df[company_df["company"].str.contains("Barclays", case=False)].sample(100) # 810 rows
+#company_df = company_df[company_df["company"].str.contains("Lloyds Bank PLC", case=False)].sample(100) # ~1K rows
+#company_df = company_df[company_df["company"].str.contains("Barclays", case=False)].sample(100) # 1100 rows
 
+print(company_df.shape)
 company_df.head()
-```
-
-```python
-company_df.shape
 ```
 
 ## Read the complaint file information
@@ -142,8 +108,10 @@ from google.cloud import storage
 
 
 def list_blobs(bucket_name):
-    """Lists all the blobs in the bucket."""
-    # bucket_name = "your-bucket-name"
+    """Lists all the blobs in the bucket.
+    
+    bucket_name = "your-bucket-name"
+    """
 
     storage_client = storage.Client()
 
@@ -151,7 +119,6 @@ def list_blobs(bucket_name):
     blobs = storage_client.list_blobs(bucket_name)
     
     return blobs
-#    return [blob.name for blob in blobs]
         
 def list_blobs_with_prefix(bucket_name, prefix, delimiter=None):
     """Lists all the blobs in the bucket that begin with the prefix.
@@ -183,21 +150,17 @@ def list_blobs_with_prefix(bucket_name, prefix, delimiter=None):
 
     storage_client = storage.Client()
 
-    # Note: Client.list_blobs requires at least package version 1.17.0.
     blobs = storage_client.list_blobs(bucket_name, prefix=prefix, delimiter=delimiter)
 
     return blobs
-#    return [blob.name for blob in blobs]
+
 ```
 
 ```python
-#[b.name for b in list_blobs("fos-trend-bukcet")][0:10]
 [b.name for b in list_blobs_with_prefix(bucket_name="fos-trend-bukcet", prefix="text_extracts")][0:10]
 ```
 
 ```python
-#[b.name for b in list_blobs_with_prefix(bucket_name="fos-trend-bucket", prefix="text_extracts") if b.name in a["drn"] ]
-
 blob_df = pd.DataFrame(
     {
         "blob": [b for b in list_blobs_with_prefix(bucket_name="fos-trend-bukcet", prefix="text_extracts")],
@@ -214,6 +177,10 @@ selected_df = blob_df.merge(company_df, how="inner", on='drn')
 print(selected_df.shape)
 
 selected_df.head()
+```
+
+```python
+
 ```
 
 ## Read the complaint text
@@ -307,8 +274,9 @@ cleaned_json_string = response_string.replace('```','').replace('"""','').split(
 d = json5.loads(cleaned_json_string)
 print(d)
 
-df = pd.json_normalize(d)
-df
+df = pd.json_normalize(d).assign(**{"Original DRN":123, "Company":"XXX").set_index("Original DRN", drop=True)
+
+df.head()
 ```
 
 ```python
@@ -316,9 +284,8 @@ df
 ```
 
 ```python
-import time
-
 df_list = []
+
 for count, (index, (blob, drn, company)) in enumerate(selected_df.iterrows()):
     print(f"{count}: {drn}")
     try:
@@ -329,10 +296,13 @@ for count, (index, (blob, drn, company)) in enumerate(selected_df.iterrows()):
         cleaned_json_string = response_string.replace('```','').replace('"""','').split("json",1)[1]
 
         d = json5.loads(cleaned_json_string)
-        df = pd.json_normalize(d)
+        df = (
+            pd.json_normalize(d)
+            .assign(**{"Original DRN":drn, "Company":company})
+            .set_index("Original DRN", drop=True)
+        )
         df_list.append(df)
         print("----------")
-        # time.sleep(5)
     except:
         continue
 
@@ -346,8 +316,10 @@ summary_table = pd.concat(df_list, axis=0)
 print(summary_table.shape)
 summary_table.head()
 
+summary_table_name = "../output/summary_sampled.csv"
+
 #summary_table_name = "../output/summary_lloyds.csv"
-summary_table_name = "../output/summary_barclays.csv"
+#summary_table_name = "../output/summary_barclays.csv"
 
 summary_table.to_csv(summary_table_name, index=False)
 ```
