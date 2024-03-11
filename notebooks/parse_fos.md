@@ -45,9 +45,13 @@ PROJECT_ID = "[your-project-id]"
 PROJECT_ID = ! gcloud config get core/project
 PROJECT_ID = PROJECT_ID[0]
 
-REGION = "europe-west1"
+REGION = "europe-west2"
 
 PROJECT_ID, REGION
+```
+
+```python
+BUCKET_NAME = "fos-trend-bucket"
 ```
 
 <!-- #region toc-hr-collapsed=true -->
@@ -157,14 +161,17 @@ def list_blobs_with_prefix(bucket_name, prefix, delimiter=None):
 ```
 
 ```python
-[b.name for b in list_blobs_with_prefix(bucket_name="fos-trend-bukcet", prefix="text_extracts")][0:10]
+[b.name for b in list_blobs_with_prefix(bucket_name=BUCKET_NAME, prefix="text_extracts")][0:10]
 ```
 
 ```python
+
+blob_list = [b for b in list_blobs_with_prefix(bucket_name=BUCKET_NAME, prefix="text_extracts")]
 blob_df = pd.DataFrame(
     {
-        "blob": [b for b in list_blobs_with_prefix(bucket_name="fos-trend-bukcet", prefix="text_extracts")],
-        "drn": [b.name[14:25] for b in list_blobs_with_prefix(bucket_name="fos-trend-bukcet", prefix="text_extracts")],
+        "blob": blob_list,
+        "drn": [b.name[14:25] for b in blob_list],
+        "year": [b.name[26:30] for b in blob_list]
     }
 )
 
@@ -274,7 +281,7 @@ cleaned_json_string = response_string.replace('```','').replace('"""','').split(
 d = json5.loads(cleaned_json_string)
 print(d)
 
-df = pd.json_normalize(d).assign(**{"Original DRN":123, "Company":"XXX").set_index("Original DRN", drop=True)
+df = pd.json_normalize(d).assign(**{"Original DRN":123, "Company":"XXX"}).set_index("Original DRN", drop=True)
 
 df.head()
 ```
@@ -344,6 +351,18 @@ df.shape
 
 ```python
 df.head()
+```
+
+```python
+! gcloud config get core/project
+```
+
+```python
+$PROJECT_ID
+```
+
+```python
+'text_extracts/DRN-1000311_2019-04-15.txt'[26:30]
 ```
 
 ```python
