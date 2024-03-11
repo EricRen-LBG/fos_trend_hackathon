@@ -52,13 +52,10 @@ Response from text-bison (latest):
       "Defendant": "Revolut Ltd",  
       "Defendant's industry": "Financial",  
       "What was the complainant complaining about": "Revolut Ltd's refusal to refund unauthorised transactions from his account.",  
-      
       "what was the main reason that the complainant gave for them complaining": "He claims that the transactions were unauthorised and that Revolut Ltd should have refunded them.",  
-      
       "what was the main deficiency of the defendant according to the complainant": "Revolut Ltd's failure to refund the unauthorised transactions.",  
       "what is the theme of the nature of the overall complaint": "Unauthorised transactions and Revolut Ltd's handling of the complaint",  
       "what was the complaint relating to": "Unauthorised transactions and Revolut Ltd's handling of the complaint",  
-      
       "What product involved in the complaint": "Revolut account",  
       "Three key words on this complaint": "Unauthorised transactions, Fraud, Revolut app",  
       "Three key topics on this complaint": "Unauthorised transactions, Liability for fraudulent transactions, Revolut's investigation",  
